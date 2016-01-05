@@ -1,10 +1,13 @@
 package gomysql
 import "database/sql"
-import _ "github.com/go-sql-driver/mysql"
+import (
+	_ "github.com/go-sql-driver/mysql"
+)
 
 
 type DBConfig struct {
 	Host string
+	Port string
 	DBName string
 	User string
 	Password string
@@ -15,29 +18,34 @@ type MysqlDB struct {
 }
 
 func NewConnection(config *DBConfig) (*MysqlDB, error)  {
-	dsn := config.User + ":" + config.Password + "@" + config.Host + "/" + config.DBName + "?charset=" + config.Charset
+	dsn := config.User + ":" + config.Password + "@" + "tcp("+ config.Host + ":" + config.Port +")" + "/" + config.DBName + "?charset=" + config.Charset
 	db, err := sql.Open("mysql", dsn)
 
 	if err!=nil {
 		return nil,err
 	} else {
-		mysqlDB := &MysqlDB{Db:db}
+		//defer db.Close()
+
+		mysqlDB := &MysqlDB{Db:*db}
 		return mysqlDB,nil
 	}
 }
 // private query function
 func (db *MysqlDB) query(sqlQuery string, params ...interface{}) (*sql.Rows, error) {
 
-	stmt,err := db.Db.Prepare(sqlQuery)
+	stmt, err := db.Db.Prepare(sqlQuery)
 
-	if err!=nil {
-		return nil,err
+	if err != nil {
+		defer stmt.Close()
+		return nil, err
 	} else {
-		rows,err := stmt.Query(params)
-		if err!=nil {
-			return nil,err
+		rows, err := stmt.Query(params...)
+		defer stmt.Close()
+		if err != nil {
+
+			return nil, err
 		} else {
-			return rows,nil
+			return rows, nil
 		}
 	}
 }
@@ -46,13 +54,17 @@ func (db *MysqlDB) execute(sqlQuery string, params ...interface{}) (sql.Result, 
 
 	stmt,err := db.Db.Prepare(sqlQuery)
 
+	//defer stmt.Close()
+
 	if err!=nil {
 		return nil,err
 	} else {
-		result,err := stmt.Exec(params)
+		result,err := stmt.Exec(params...)
 		if err!=nil {
+			defer stmt.Close()
 			return nil,err
 		} else {
+			defer stmt.Close()
 			return result,nil
 		}
 	}
@@ -60,11 +72,11 @@ func (db *MysqlDB) execute(sqlQuery string, params ...interface{}) (sql.Result, 
 
 // Public select function which return Rows objects
 func (db *MysqlDB) Select(sqlQuery string, params ...interface{}) (*sql.Rows, error) {
-	return db.query(sqlQuery,params)
+	return db.query(sqlQuery,params...)
 }
 // Public Insert function which return last insert id
 func (db *MysqlDB) Insert(sqlQuery string, params ...interface{}) (int64, error) {
-	result,err := db.execute(sqlQuery,params)
+	result,err := db.execute(sqlQuery,params...)
 
 	if err != nil {
 		return -1,err
@@ -75,7 +87,7 @@ func (db *MysqlDB) Insert(sqlQuery string, params ...interface{}) (int64, error)
 }
 // Public Update function which return number of row effected
 func (db *MysqlDB) Update(sqlQuery string, params ...interface{}) (int64, error) {
-	result,err := db.execute(sqlQuery,params)
+	result,err := db.execute(sqlQuery,params...)
 
 	if err != nil {
 		return -1,err
@@ -85,7 +97,7 @@ func (db *MysqlDB) Update(sqlQuery string, params ...interface{}) (int64, error)
 }
 // Public Delete function which return number of row effected
 func (db *MysqlDB) Delete(sqlQuery string, params ...interface{}) (int64, error) {
-	result,err := db.execute(sqlQuery,params)
+	result,err := db.execute(sqlQuery,params...)
 
 	if err != nil {
 		return -1,err
