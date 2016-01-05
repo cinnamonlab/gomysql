@@ -24,8 +24,7 @@ func NewConnection(config *DBConfig) (*MysqlDB, error)  {
 	if err!=nil {
 		return nil,err
 	} else {
-		//defer db.Close()
-
+		defer db.Close()
 		mysqlDB := &MysqlDB{Db:*db}
 		return mysqlDB,nil
 	}
@@ -36,13 +35,11 @@ func (db *MysqlDB) query(sqlQuery string, params ...interface{}) (*sql.Rows, err
 	stmt, err := db.Db.Prepare(sqlQuery)
 
 	if err != nil {
-		defer stmt.Close()
 		return nil, err
 	} else {
 		rows, err := stmt.Query(params...)
 		defer stmt.Close()
 		if err != nil {
-
 			return nil, err
 		} else {
 			return rows, nil
@@ -60,11 +57,10 @@ func (db *MysqlDB) execute(sqlQuery string, params ...interface{}) (sql.Result, 
 		return nil,err
 	} else {
 		result,err := stmt.Exec(params...)
+		defer stmt.Close()
 		if err!=nil {
-			defer stmt.Close()
 			return nil,err
 		} else {
-			defer stmt.Close()
 			return result,nil
 		}
 	}
