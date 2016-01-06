@@ -18,7 +18,8 @@ type MysqlDB struct {
 }
 
 func NewConnection(config *DBConfig) (*MysqlDB, error)  {
-	dsn := config.User + ":" + config.Password + "@" + "tcp("+ config.Host + ":" + config.Port +")" + "/" + config.DBName + "?charset=" + config.Charset
+	dsn := config.User + ":" + config.Password + "@" + "tcp("+ config.Host + ":" + config.Port +")" + "/" +
+	config.DBName + "?charset=" + config.Charset + "&parseTime=true"
 	db, err := sql.Open("mysql", dsn)
 
 	if err!=nil {
@@ -67,9 +68,16 @@ func (db *MysqlDB) execute(sqlQuery string, params ...interface{}) (sql.Result, 
 }
 
 // Public select function which return Rows objects
-func (db *MysqlDB) Select(sqlQuery string, params ...interface{}) (*sql.Rows, error) {
-	return db.query(sqlQuery,params...)
+func (db *MysqlDB) Select(sqlQuery string, params ...interface{}) (*Rows, error) {
+	rows,err := db.query(sqlQuery,params...)
+
+	if err!=nil {
+		return  nil,err
+	} else {
+		return &Rows{*rows},nil
+	}
 }
+
 // Public Insert function which return last insert id
 func (db *MysqlDB) Insert(sqlQuery string, params ...interface{}) (int64, error) {
 	result,err := db.execute(sqlQuery,params...)

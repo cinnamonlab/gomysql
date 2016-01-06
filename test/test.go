@@ -7,13 +7,13 @@ import (
 )
 
 type testRow struct {
-	Id int
-	Created_at time.Time
-	Updated_at time.Time
-	Name string
-	Age int
-	Address string
-	IsActive bool
+	Id int					`db:"id"`
+	Created_at time.Time	`db:"created_at"`
+	Updated_at time.Time	`db:"updated_at"`
+	Name string				`db:"name"`
+	Age float32					`db:"age"`
+	Address string			`db:"adress"`
+	IsActive int64			`db:"is_active"`
 }
 
 func main() {
@@ -31,19 +31,23 @@ func main() {
 		fmt.Println("Can not open Mysql connection")
 	} else {
 		// test select
-			rows,err := db.Select("select * from test where id >=? and id <= ?",3,10)
+			rows,err := db.Select("select * from test ")
 
 		if err !=nil {
 			fmt.Println("Error:"+ err.Error())
 		} else {
-			defer rows.Close()
+			defer rows.Rows.Close()
 
-			for rows.Next() {
-				var test testRow
-				rows.Scan(&test.Id,&test.Created_at,&test.Updated_at,&test.Name,&test.Age,&test.Address,&test.IsActive)
+			maps,merr := rows.ToMap()
 
-				fmt.Println(test)
+			if merr !=nil {
+				fmt.Println("wrong");
+			} else
+			{
+				fmt.Println(maps)
 			}
+
+
 		}
 
 		// test INSERT
