@@ -9,6 +9,7 @@ import (
 
 type Rows struct {
 	sql.Rows
+	first_one bool
 }
 
 func (rows *Rows) ToStruct(dest interface{},dbtag string) error {
@@ -61,6 +62,10 @@ func (rows *Rows) ToStruct(dest interface{},dbtag string) error {
 			direct.Set(reflect.Append(direct,vp))
 		} else {
 			direct.Set(reflect.Append(direct,v))
+		}
+
+		if(rows.first_one==true) {
+			return nil
 		}
 
 	}

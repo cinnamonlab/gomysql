@@ -74,7 +74,7 @@ func (db *MysqlDB) Select(sqlQuery string, params ...interface{}) (*Rows, error)
 	if err!=nil {
 		return  nil,err
 	} else {
-		return &Rows{*rows},nil
+		return &Rows{*rows,false},nil
 	}
 }
 
