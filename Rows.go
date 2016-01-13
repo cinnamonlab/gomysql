@@ -12,9 +12,9 @@ type Rows struct {
 	First_one bool
 }
 
-func (rows *Rows) ToStruct(dest interface{},dbtag string) error {
+func (rows *Rows) ToStruct(dest interface{}) error {
 
-	destMap, err := makeMapable(dest, dbtag)
+	destMap, err := makeMapable(dest)
 
 	if err != nil {
 		return err
@@ -126,7 +126,7 @@ func (rows *Rows) ToMap() ([]map[string]interface{}, error) {
 	return rowMaps,nil
 }
 
-func makeMapable(dest interface{},tagKey string) (map[string]reflect.StructField, error) {
+func makeMapable(dest interface{}) (map[string]reflect.StructField, error) {
 
 	value := reflect.ValueOf(dest)
 
@@ -159,7 +159,7 @@ func makeMapable(dest interface{},tagKey string) (map[string]reflect.StructField
 		tag := typeField.Tag
 
 		if tag != "" {
-			mapobj[tag.Get(tagKey)]=typeField
+			mapobj[tag.Get("json")]=typeField
 		}
 	}
 

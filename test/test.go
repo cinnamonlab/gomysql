@@ -11,7 +11,7 @@ type testRow struct {
 	Created_at time.Time	`db:"created_at"`
 	Updated_at time.Time	`db:"updated_at"`
 	Name string				`db:"name"`
-	Age float32					`db:"age"`
+	Age float32				`db:"age"`
 	Address string			`db:"adress"`
 	IsActive int64			`db:"is_active"`
 }
@@ -38,14 +38,17 @@ func main() {
 		} else {
 			defer rows.Rows.Close()
 
-			maps,merr := rows.ToMap()
+			test :=[]testRow{}
+
+			merr := rows.ToStruct(&test)
 
 			if merr !=nil {
-				fmt.Println("wrong");
+				fmt.Println(merr.Error());
 			} else
 			{
-				fmt.Println(maps)
+				fmt.Println(test)
 			}
+
 
 
 		}
