@@ -3,23 +3,37 @@ import (
 	"github.com/cinnamonlab/gomysql"
 	"fmt"
 	"time"
-	"strconv"
+	"database/sql"
+	"github.com/go-sql-driver/mysql"
 )
 
 type testRow struct {
-	Id int					`db:"id"`
-	Created_at time.Time	`db:"created_at"`
-	Updated_at time.Time	`db:"updated_at"`
-	Name string				`db:"name"`
-	Age float32				`db:"age"`
-	Address string			`db:"adress"`
-	IsActive int64			`db:"is_active"`
+	Id 			string 			`json:"id"`
+	Name 		string 			`json:"name"`
+	FirstName 	string 			`json:"first_name"`
+	LastName 	string 			`json:"last_name"`
+	Avatar 		string 			`json:"avatar"`
+	Email 		sql.NullString 	`json:"email"`
+	Phone		sql.NullString  `json:"phone"`
+	Language 	string 			`json:"language"`
+	AccessToken string 			`json:"access_token"`
+
+	Password 	string 			`json:"pass_word"`
+	UserName  	string 			`json:"user_name"`
+
+	CreatedAt 	time.Time	 	`json:"created_at"`
+	UpdatedAt 	time.Time 		`json:"updated_at"`
+	EmailNotiFlag bool 			`json:"email_noti_flg"`
+
+	ScannedAt 	mysql.NullTime  `json:"scanned_at"`
+	LastAction 	mysql.NullTime 	`json:"last_action"`
+	LastLogin  	mysql.NullTime 	`json:"last_login"`
 }
 
 func main() {
 	config := gomysql.DBConfig{
 		Host:"localhost",
-		DBName:"test",
+		DBName:"tuya",
 		User:"root",
 		Password:"",
 		Charset:"utf8",
@@ -31,7 +45,7 @@ func main() {
 		fmt.Println("Can not open Mysql connection")
 	} else {
 		// test select
-			rows,err := db.Select("select * from test ")
+			rows,err := db.Select("select * from user ")
 
 		if err !=nil {
 			fmt.Println("Error:"+ err.Error())
@@ -48,33 +62,6 @@ func main() {
 			{
 				fmt.Println(test)
 			}
-
-
-
-		}
-
-		// test INSERT
-		lastInsertId,ierr := db.Insert("insert into test(name,age,adress) values (?,?,?)","ccccc",20,"SDSDSDS")
-		if ierr !=nil {
-			fmt.Println("Error:"+ ierr.Error())
-		} else {
-			fmt.Println("Last Insert ID:" + strconv.FormatInt(lastInsertId,10))
-		}
-
-		// test Update
-		effected,uerr := db.Update("update test set name =? where id=?","xxxxx",lastInsertId)
-		if uerr !=nil {
-			fmt.Println("Error:"+ uerr.Error())
-		} else {
-			fmt.Println("Updated row effect:" + strconv.FormatInt(effected,10))
-		}
-
-		// test delete
-		deffected,derr := db.Delete("DELETE FROM TEST WHERE ID =?",lastInsertId)
-		if derr !=nil {
-			fmt.Println("Error:"+ derr.Error())
-		} else {
-			fmt.Println("Deleted row effect:" + strconv.FormatInt(deffected,10))
 		}
 	}
 }

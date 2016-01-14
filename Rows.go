@@ -4,7 +4,6 @@ import (
 	"reflect"
 	"errors"
 	"fmt"
-	"strconv"
 )
 
 type Rows struct {
@@ -126,32 +125,20 @@ func (rows *Rows) ToMap() ([]map[string]interface{}, error) {
 	return rowMaps,nil
 }
 
-func makeMapable(dest interface{}) (map[string]reflect.StructField, error) {
+func makeMapable(rowsSlicePtr interface{}) (map[string]reflect.StructField, error) {
 
-	value := reflect.ValueOf(dest)
+	sliceValue := reflect.Indirect(reflect.ValueOf(rowsSlicePtr))
 
-	// json.Unmarshal returns errors for these
-	if value.Kind() != reflect.Ptr {
-		return nil,errors.New("must pass a pointer, not a value, to StructScan destination")
-	}
-	if value.IsNil() {
-		return nil,errors.New("nil pointer passed to StructScan destination")
+	if sliceValue.Kind() != reflect.Slice {
+		return nil,errors.New("needs a pointer to a slice")
 	}
 
-	slice, err := baseType(value.Type(), reflect.Slice)
-	if err != nil {
-		return nil,err
-	}
+	sliceElementType := sliceValue.Type().Elem()
+	st := reflect.New(sliceElementType)
 
-	base := deref(slice.Elem())
-
-	destStruct := reflect.New(base)
-
-	val := reflect.Indirect(destStruct)
+	val := reflect.Indirect(st)
 
 	mapobj := make(map[string]reflect.StructField)
-
-	fmt.Println(strconv.Itoa(val.NumField()))
 
 	for i := 0; i < val.NumField(); i++ {
 		//valueField := val.Field(i)
