@@ -2,38 +2,32 @@ package main
 import (
 	"github.com/cinnamonlab/gomysql"
 	"fmt"
-	"time"
-	"database/sql"
-	"github.com/go-sql-driver/mysql"
+	"reflect"
+	"errors"
 )
 
-type testRow struct {
-	Id 			string 			`json:"id"`
-	Name 		string 			`json:"name"`
-	FirstName 	string 			`json:"first_name"`
-	LastName 	string 			`json:"last_name"`
-	Avatar 		string 			`json:"avatar"`
-	Email 		sql.NullString 	`json:"email"`
-	Phone		sql.NullString  `json:"phone"`
-	Language 	string 			`json:"language"`
-	AccessToken string 			`json:"access_token"`
-
-	Password 	string 			`json:"pass_word"`
-	UserName  	string 			`json:"user_name"`
-
-	CreatedAt 	time.Time	 	`json:"created_at"`
-	UpdatedAt 	time.Time 		`json:"updated_at"`
-	EmailNotiFlag bool 			`json:"email_noti_flg"`
-
-	ScannedAt 	mysql.NullTime  `json:"scanned_at"`
-	LastAction 	mysql.NullTime 	`json:"last_action"`
-	LastLogin  	mysql.NullTime 	`json:"last_login"`
+type FirstTable struct {
+	FirstTableId int `json:"idfirst_table"`
+	FirstTableCol string `json:"first_tablecol"`
+	FirstTableCol1 string `json:"first_tablecol1"`
 }
+
+type SecondTable struct {
+	SecondTableId int `json:"idsecond_table"`
+	SecondTableCol string `json:"second_tablecol"`
+	SecondTableCol1 string `json:"second_tablecol1"`
+}
+
+type MixTable struct {
+	SecondTable
+	FirstTable
+}
+
 
 func main() {
 	config := gomysql.DBConfig{
 		Host:"localhost",
-		DBName:"tuya",
+		DBName:"test",
 		User:"root",
 		Password:"",
 		Charset:"utf8",
@@ -45,14 +39,14 @@ func main() {
 		fmt.Println("Can not open Mysql connection")
 	} else {
 		// test select
-			rows,err := db.Select("select * from user ")
+			rows,err := db.Select("select  * from first_table inner join second_table on second_table.first_table_id = first_table.idfirst_table")
 
 		if err !=nil {
 			fmt.Println("Error:"+ err.Error())
 		} else {
 			defer rows.Rows.Close()
 
-			test :=[]testRow{}
+			test :=[]MixTable{}
 
 			merr := rows.ToStruct(&test)
 
@@ -62,6 +56,44 @@ func main() {
 			{
 				fmt.Println(test)
 			}
+		}
+	}
+}
+
+func makeMapable(rowsSlicePtr interface{}) (map[string]reflect.StructField, error) {
+
+	sliceValue := reflect.Indirect(reflect.ValueOf(rowsSlicePtr))
+
+	if sliceValue.Kind() != reflect.Slice {
+		return nil,errors.New("needs a pointer to a slice")
+	}
+
+	sliceElementType := sliceValue.Type().Elem()
+	st := reflect.New(sliceElementType)
+
+	val := reflect.Indirect(st)
+
+	mapobj := make(map[string]reflect.StructField)
+
+	getMappableStructure(val, &mapobj)
+
+	return mapobj,nil
+}
+
+func getMappableStructure(obj reflect.Value, resultMap *map[string]reflect.StructField) {
+	for i := 0; i < obj.NumField(); i++ {
+		typeField := obj.Type().Field(i)
+		if typeField.Type.Kind() == reflect.Struct {
+			newObject := reflect.New(typeField.Type)
+
+			newVal := reflect.Indirect(newObject)
+
+			getMappableStructure(newVal,resultMap)
+		}
+		tag := typeField.Tag
+
+		if tag != "" {
+			(*resultMap)[tag.Get("json")] = typeField
 		}
 	}
 }

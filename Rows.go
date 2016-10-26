@@ -140,17 +140,27 @@ func makeMapable(rowsSlicePtr interface{}) (map[string]reflect.StructField, erro
 
 	mapobj := make(map[string]reflect.StructField)
 
-	for i := 0; i < val.NumField(); i++ {
-		//valueField := val.Field(i)
-		typeField := val.Type().Field(i)
+	getMappableStructure(val, &mapobj)
+
+	return mapobj,nil
+}
+
+func getMappableStructure(obj reflect.Value, resultMap *map[string]reflect.StructField) {
+	for i := 0; i < obj.NumField(); i++ {
+		typeField := obj.Type().Field(i)
+		if typeField.Type.Kind() == reflect.Struct {
+			newObject := reflect.New(typeField.Type)
+
+			newVal := reflect.Indirect(newObject)
+
+			getMappableStructure(newVal,resultMap)
+		}
 		tag := typeField.Tag
 
 		if tag != "" {
-			mapobj[tag.Get("json")]=typeField
+			(*resultMap)[tag.Get("json")] = typeField
 		}
 	}
-
-	return mapobj,nil
 }
 
 func deref(t reflect.Type) reflect.Type {
